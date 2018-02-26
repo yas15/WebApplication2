@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Linq;
 using WebApplication2.Data;
 using WebApplication2.Models;
@@ -10,6 +12,22 @@ namespace WebApplication2.Controllers
     public class PointsOfInterestController : Controller
     {
 
+        private ILogger<PointsOfInterestController> _logger;
+
+
+        // This is the constructor for the class PointsOfInterestController.
+        // The constructor requires a parameter of type ILogger<T>
+        // The ASP.NET Core built-in DI container already has a service registered for interface of type ILogger<T>,
+        // So the DI container will create an instance of this concrete type for us.
+
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger)
+        {
+            _logger = logger;
+        }
+
+
+
+
         // Most actions (i.e. methods in ASP.Net MVC) return an instance of a class that derives from ActionResult.
         // Define an new action (a method in ASP.NET MVC) that returns an object that implements the IActionResult interface
         // IActionResult methods typically take a model and returns a view.
@@ -19,14 +37,24 @@ namespace WebApplication2.Controllers
         [HttpGet("{cityId}/pointsofinterest")]
         public IActionResult GetPointsOfInterest(int cityId)
         {
-            var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
-
-            if (city == null)
+            // we ALWAYS want to log exceptions
+            try
             {
-                return NotFound();
-            }
+                var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
 
-            return Ok(city.PointsOfInterest);
+                if (city == null)
+                {
+                    _logger.LogInformation($"City with id {cityId} wasn't found when accessing points of interest.");
+                    return NotFound();
+                }
+
+                return Ok(city.PointsOfInterest);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Exception while getting points of interest for city with id {cityId}.", ex);
+                return StatusCode(500, "A problem happened while handling your request.");
+            }
         }
 
 

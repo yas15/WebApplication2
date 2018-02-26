@@ -1,14 +1,27 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
 
 namespace WebApplication2
 {
     public class Startup
     {
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
+        // An instance of the Startup class is created by the WebHost class, when the Main() method in the Program
+        // class is executed i.e. when we start the appliaction.
+        // If the ConfigureServices() method exists it will automatically be called by the ASP.NET core runtime. 
+        // By default ConfigureServices has one parameter "services" of type IServiceCollection. The IServiceCollection parameter 
+        // i.e. "services" parameter is a dependency injection container and we Use this method to add services to that container.
+        // Once we have added a service to the container "services" it will be available to use anywhere in our application.
+        // The services we add to the container are resolved via dependency injection i.e. when we add a service to the container we 
+        // specify for each interface type required by the application the concrete class the container must create an instance of.
+        // The ASP.Net Core framework  automatically provides the following services to the IServiceCollection container,
+        // (so we do not need to add them in the ConfigureServices() method), these include:
+        // IHostingEnvironment,ILoggerFactory,ILogger<T>,IApplicationBuilderFactory,IHttpContextFactory,IOptions<T>,DiagnosticSource,         
+        // DiagnosticListener, IStartupFilter,ObjectPoolProvider,IConfigureOptions<T>, IServer,IStartup,IApplicationLifetime
+        // For more information see: https://go.microsoft.com/fwlink/?LinkID=398940
+        // Also see: https://codingblast.com/asp-net-core-configureservices-vs-configure/
         public void ConfigureServices(IServiceCollection services)
         {
             // services.AddMvc() add a service to the ASP.Net core web application that 
@@ -29,13 +42,30 @@ namespace WebApplication2
             });
 
 
-
-
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        // This method gets called by the ASP.NET core runtime after the ConfigureServices() method has been called.
+        // The Configure method is used to set up the middleware components in the HTTP request pipeline, i.e. for every HTTP 
+        // request message that arrives to the server, this method defines how that HTTP request is handled by our web application.
+        // ASP.NET Core includes a simple built-in DI container, that already has some services registered (by service
+        // we mean a concrete class type that is managed by the DI container).
+        // Remember that ASP.NET core uses dependency injection, so each time an interface type is required by a method, the 
+        // .Net core runtime will check the DI container to see if a concrete class has been registered for that interface
+        // and then return an instance of that concrete class.
+
+        // To the Configure() method, we have added the parameter loggerFactory of type ILoggerFactory. 
+        // The ASP.NET Core built-in DI container already has a service registered for interface of type ILoggerFactory
+        // so we do not need to register this service with the container and the DI container will create an instance 
+        // of this type for us.
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            //Adds a console logger  to the appliaction
+            loggerFactory.AddConsole();
+
+            //Adds a debug logger  to the appliaction
+            loggerFactory.AddDebug();
+
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
